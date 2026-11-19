@@ -6,6 +6,7 @@
   "version": "0.7.6",
   "description": "把一段视频变成可引用的分镜图：一个镜头一格，格子密度跟随切点密度（1/1…1/8），行内打包成尽量少的图，附一份能引用的时间码索引和可覆盖的档位表。移植自 dsh-video-storyboard（Apache-2.0）。",
   "entry": "index.js",
+  "runtime": "agent",
   "engines": { "tianshu": ">=4.1.0" },
   "capabilities": ["tools", "workspace", "shell"],
   "permissions": {

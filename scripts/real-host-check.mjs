@@ -74,7 +74,13 @@ const bound = await bindIsolatedTpiPlugin(
     signal: new AbortController().signal,
   },
 );
-console.log(`沙箱绑定成功: ${bound.pluginId} · tools=${bound.tools.length} · 能力=${bound.tools[0]?.constructor?.name ?? 'n/a'}`);
+const runtimeNames = bound.tools.map((t) => t.definition?.name);
+const manifestNames = manifest.contributes.tools.map((t) => t.name);
+const same = JSON.stringify(runtimeNames.sort()) === JSON.stringify(manifestNames.sort());
+console.log(`沙箱绑定成功: ${bound.pluginId} · tools=${bound.tools.length}`);
+console.log(`  运行时工具名: ${runtimeNames.join(', ')}`);
+console.log(`  manifest 声明: ${manifestNames.join(', ')}`);
+console.log(`  两者一致: ${same ? 'YES' : 'NO — 契约要求同名'}`);
 
 // ── 3. 沙箱内调用（可选）
 const [tool, argsJson] = process.argv.slice(2);

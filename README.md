@@ -100,6 +100,29 @@ TPI 2.0 的工具回执只有 `content` 字符串，没有 DSH 的 attachments �
   `$DSH_HOME/video.json`（`DSH_HOME` 未设时用 `~/.dsh`），与上游同一份 schema。
 - `voice`/ASR 走 `src/storyboard/asr.js` 的既有后端（需要 key 或本地服务），不做宿主侧模型注入。
 
+## 契约符合性（TPI 2.0）
+
+条款不是抄文档，是从宿主 runtime 的实现里读出来、再用宿主自己的校验器跑一遍：
+
+```bash
+node scripts/contract-check.mjs          # 30 条，当前 30/30 PASS
+```
+
+覆盖范围（每条都能指到宿主实现）：
+
+| 条款 | 依据 |
+|---|---|
+| `$tpi` ∈ 宿主 `TPI_SUPPORTED_VERSIONS`、`kind`、id/version 格式、description ≤500、`engines.tianshu` 必填、能力↔权限配对 | `chunk-CIXVI7BW.js` 的 `parseTpiManifest`（zod + superRefine） |
+| 文件存在、非 legacy 格式 | `chunk-JHS3EY74.js` 的 `readTpiManifest` |
+| 工具 `name` ≤64 且 snake_case、manifest description ≤200 | 同上 zod schema |
+| 运行时 description ≤**2000**、`timeoutMs` ≤600000 | `chunk-RARWTZDC.js` 的 `toolDeclaration`（`text(0x7d0)` / `max(600000)`） |
+| 目录内无符号链接（`nlink` 必须为 1） | 同文件的 `assertPrivateTree` |
+| **manifest 声明与运行时注册逐名一致** | `scripts/real-host-check.mjs` 会打印两份清单并比对 |
+
+一个实测细节：上游工具描述是 882 / 412 / 319 / 395 / 193 字符，全部落在运行时上限
+2000 之内、但远超 manifest 的 200——所以 manifest 里用的是短描述（25/20/60/14/33 字符），
+两套描述各管一处，不能混用。
+
 ## 真机测试（Windows 10 · 天枢 4.1.0 · 宿主进程 tianshu-desktop 33824）
 
 不是 mock：直接用宿主 runtime 自己的三个文件跑通。
