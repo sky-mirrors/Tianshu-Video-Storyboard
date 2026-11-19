@@ -60,6 +60,8 @@ check('T12', 'contributes.tools 非空时必须声明 "tools" 能力', (m.contri
 // ── 条款：运行时侧（sandbox 的 toolDeclaration）
 const spec = await import(pathToFileURL(join(dir, 'src/storyboard/tool-spec.js')).href);
 const specs = [spec.storyboardToolSpec(), spec.zoomToolSpec(), spec.probeToolSpec(), spec.locateToolSpec(), spec.helpToolSpec()];
+// 存在性先于遍历：specs 静默变空时，下面的 for 会零条通过（和 timeout 那次一样的坑）。
+check('R:spec-count', '运行时 spec 数与 manifest 工具声明数一致', specs.length === (m.contributes?.tools?.length ?? 0), `${specs.length} vs ${m.contributes?.tools?.length ?? 0}`);
 for (const s of specs) {
   check(`R:${s.name}`, '运行时 description ≤2000（text(0x7d0)）', s.description.length <= 2000, `${s.description.length}`);
 }

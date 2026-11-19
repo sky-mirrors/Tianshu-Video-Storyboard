@@ -105,7 +105,7 @@ TPI 2.0 的工具回执只有 `content` 字符串，没有 DSH 的 attachments �
 条款不是抄文档，是从宿主 runtime 的实现里读出来、再用宿主自己的校验器跑一遍：
 
 ```bash
-node scripts/contract-check.mjs          # 36 条，当前 36/36 PASS
+node scripts/contract-check.mjs          # 37 条，当前 37/37 PASS
 ```
 
 覆盖范围（每条都能指到宿主实现）：
