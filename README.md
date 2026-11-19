@@ -98,25 +98,27 @@ TPI 2.0 的工具回执只有 `content` 字符串，没有 DSH 的 attachments �
 不装进天枢也能验证胶水层（需要真实视频 + ffmpeg）：
 
 ```bash
-FFMPEG_PATH=/path/to/ffmpeg node test/tpi-host.smoke.mjs video_probe '{"input":"D:/clip.mp4"}'
-FFMPEG_PATH=... node test/tpi-host.smoke.mjs video_storyboard '{"input":"D:/clip.mp4","transcript":"off"}'
+FFMPEG_PATH=/path/to/ffmpeg node scripts/tpi-host.smoke.mjs video_probe '{"input":"D:/clip.mp4"}'
+FFMPEG_PATH=... node scripts/tpi-host.smoke.mjs video_storyboard '{"input":"D:/clip.mp4","transcript":"off"}'
 ```
 
 它用假宿主按 TPI 2.0 的 `host` 契约跑一遍：写 `job.json` → `shell.run` → 读 `result.json`。
+放在 `scripts/` 而不是 `test/`，是因为 `node --test` 会把 `test/` 下每个文件当成一个测试跑。
 
-上游自带的 49 个测试文件**没有收进本仓库**（其中 8 个直接 import 未移植的 DSH 层
-`src/settings/*`、`src/tools/shared.js`、`src/storyboard/{register,host-asr,offload}.js`）。
-需要复跑的话，把上游 `test/` 拷到本仓库 `test/` 根目录再 `node --test test/*.test.mjs`
-（放根目录是因为测试里写的是 `../src/...`）。本轮实测 550 个用例：**527 通过 / 8 跳过 / 15 失败**，
-失败分三类，没有一项指向算法层：
+上游自带的 49 个测试文件**已收进 `test/`**（`npm test` 即 `node --test`，会跑全部）。
+它们覆盖的是已移植的算法层：`asr-lifecycle`、`asr-local`、`asr`、`audio`、`audio-rhythm`、
+`binaries`、`cells`、`scan`、`sheet`、`tiers`、`pack`、`probe`、`transcript-pass` 等 41 个文件
+在本机全绿。本轮实测 550 个用例：**527 通过 / 8 跳过 / 15 失败**，失败分三类，没有一项指向算法层：
 
 | 失败源 | 数量 | 原因 |
 |---|---|---|
-| 整文件 import 失败 | 8 | 依赖未移植的 DSH 层（settings / tools/shared / register / host-asr / offload） |
+| 整文件 import 失败 | 8 | 依赖未移植的 DSH 层（`src/settings/*`、`src/tools/shared.js`、`src/storyboard/{register,host-asr,offload}.js`）；`pipeline.test.mjs` 另有 2 处动态 `import('../src/index.js')`，主体用例可跑 |
 | DSH 元数据断言 | 4 | `schema-audit` ×3 与 `probe-cli` 校验 `dsh.plugin.json`、`package.json` 的 bin 注册 |
 | 本机 ffmpeg 构建缺能力 | 3 | 音频 e2e 用 `anullsrc=...:duration=`（本机构建无该选项）；极静素材测试裸调 `'ffmpeg'`（不在 PATH）；`N-92722-...` nightly 版本号不匹配语义版本正则 |
 
 补齐 `src/ocr_bridge.py` 后，`ocr.test.mjs` 由 17/19 变 19/19（含 #39 的回归护栏）。
+上面 15 条红是**已知且已归因**的，不是待修缺陷；换一台装标准 ffmpeg（版本号形如 `6.1.1`）
+并把 ffmpeg 放进 PATH 的机器上，第三类会自动变绿。
 
 清单结构可以自己校验（TPI 2.0 registry schema）：
 

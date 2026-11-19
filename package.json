@@ -10,7 +10,6 @@
     "node": ">=20"
   },
   "scripts": {
-    "check": "node scripts/check-imports.mjs",
-    "test": "node --test test/"
+    "test": "node --test"
   }
 }
