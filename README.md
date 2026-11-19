@@ -6,7 +6,7 @@
 移植自 [`SAOS-3624/dsh-video-storyboard`](https://github.com/SAOS-3624/dsh-video-storyboard)
 （Apache-2.0，见 `LICENSE` / `CREDITS.md` / `NOTICE`），按天枢 **TPI 2.0** 的隔离插件规范重接入口层。
 
-## 五个工具
+## 六个工具
 
 | 工具 | 用途 | 出图 |
 |---|---|---|
@@ -193,8 +193,9 @@ FFMPEG_PATH=/path/to/ffmpeg \
 `shell.run` 用本地 bash 代跑（契约相同，但不是宿主那一份实现）。
 数据目录留在系统临时目录下（AppContainer 给它的 ACL 让宿主删不掉，属预期）。
 
-真机上五个工具全部跑过一遍：`video_storyboard_probe` 263ms、`video_storyboard` 2404ms（出图 524622 字节）、
-`video_help`、`video_zoom`（`from/to` 路径）、`video_locate`（无转写时给降级说明，750ms）。
+真机上 6 个工具全部跑过一遍：`video_storyboard_probe` 263ms、`video_storyboard` 2404ms（出图 524622 字节）、
+`video_subtitles` 1300ms（3 条字幕带，`times` 对齐）、`video_help`、`video_zoom`（`from/to` 与 `cellId` 两条路径）、
+`video_locate`（无转写时给降级说明，750ms）。
 边界同样正确：空 `input` 与 `maxFrames: 10001` 都在 3ms 内被插件侧拒绝，没有落到 worker。
 
 **一个真机才会遇到的坑**：`cells.json` 只保留最近 12 个文件的记录（`cells.js` 的 `MAX_FILES`），

@@ -102,6 +102,8 @@ const SECTIONS = {
     '(default 0.82-0.98). Each strip is one moment, top to bottom; a blank strip means "no subtitle',
     'here", which is also information. Strips are cut SEQUENTIALLY — parallel cropping on a',
     'memory-tight machine dies with 0xC000012D.',
+    '`times` = known timestamps (seconds) to align strips to, e.g. from a subtitle track or a prior',
+    'video_locate. It replaces uniform sampling and usually halves the strip count.',
   ].join('\n'),
 };
 
