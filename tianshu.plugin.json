@@ -1,0 +1,24 @@
+{
+  "$tpi": "2.0",
+  "kind": "tianshu.plugin",
+  "id": "video-storyboard",
+  "displayName": "视频分镜",
+  "version": "0.7.6",
+  "description": "把一段视频变成可引用的分镜图：一个镜头一格，格子密度跟随切点密度（1/1…1/8），行内打包成尽量少的图，附一份能引用的时间码索引和可覆盖的档位表。移植自 dsh-video-storyboard（Apache-2.0）。",
+  "entry": "index.js",
+  "engines": { "tianshu": ">=4.1.0" },
+  "capabilities": ["tools", "workspace", "shell"],
+  "permissions": {
+    "workspace": { "read": true, "write": true },
+    "shell": { "run": true }
+  },
+  "contributes": {
+    "tools": [
+      { "name": "video_storyboard", "description": "把视频切成镜头并出分镜宫格图，附可引用的时间码索引" },
+      { "name": "video_zoom", "description": "对某一段/某一格近距离重看：格少、每格大" },
+      { "name": "video_probe", "description": "只读容器头：时长/分辨率/帧率/编解码器，不出图" },
+      { "name": "video_locate", "description": "纯文本定位：某句话在第几分钟" },
+      { "name": "video_help", "description": "video_* 工具手册：token 成本、策略、档位表、切点调参" }
+    ]
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "name": "tianshu-video-storyboard",
+  "version": "0.7.6",
+  "private": true,
+  "description": "TPI 2.0 port of dsh-video-storyboard: shot-aware storyboard packed into few images with a citable timestamp index.",
+  "type": "module",
+  "main": "index.js",
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "check": "node scripts/check-imports.mjs",
+    "test": "node --test test/"
+  }
+}
