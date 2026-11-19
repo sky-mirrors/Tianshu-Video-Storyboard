@@ -104,13 +104,19 @@ FFMPEG_PATH=... node test/tpi-host.smoke.mjs video_storyboard '{"input":"D:/clip
 
 它用假宿主按 TPI 2.0 的 `host` 契约跑一遍：写 `job.json` → `shell.run` → 读 `result.json`。
 
-上游自带的 49 个测试文件**没有收进本仓库**（其中 6 个直接 import 未移植的 DSH 层
+上游自带的 49 个测试文件**没有收进本仓库**（其中 8 个直接 import 未移植的 DSH 层
 `src/settings/*`、`src/tools/shared.js`、`src/storyboard/{register,host-asr,offload}.js`）。
 需要复跑的话，把上游 `test/` 拷到本仓库 `test/` 根目录再 `node --test test/*.test.mjs`
-（放根目录是因为测试里写的是 `../src/...`）。本轮实测：550 个用例 525 通过、8 跳过、
-17 失败——失败项全部归因于 DSH 层缺失（6 个整文件）或本机 ffmpeg 构建缺能力
-（`anullsrc` 的 `duration` 选项、nightly 版本号 `N-92722-...` 不匹配语义版本正则），
-没有一项指向算法层。
+（放根目录是因为测试里写的是 `../src/...`）。本轮实测 550 个用例：**527 通过 / 8 跳过 / 15 失败**，
+失败分三类，没有一项指向算法层：
+
+| 失败源 | 数量 | 原因 |
+|---|---|---|
+| 整文件 import 失败 | 8 | 依赖未移植的 DSH 层（settings / tools/shared / register / host-asr / offload） |
+| DSH 元数据断言 | 4 | `schema-audit` ×3 与 `probe-cli` 校验 `dsh.plugin.json`、`package.json` 的 bin 注册 |
+| 本机 ffmpeg 构建缺能力 | 3 | 音频 e2e 用 `anullsrc=...:duration=`（本机构建无该选项）；极静素材测试裸调 `'ffmpeg'`（不在 PATH）；`N-92722-...` nightly 版本号不匹配语义版本正则 |
+
+补齐 `src/ocr_bridge.py` 后，`ocr.test.mjs` 由 17/19 变 19/19（含 #39 的回归护栏）。
 
 清单结构可以自己校验（TPI 2.0 registry schema）：
 
