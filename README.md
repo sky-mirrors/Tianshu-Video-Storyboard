@@ -25,6 +25,8 @@
 | 本仓库自有代码（`index.js`、`tpi.js`、`lib/`、`worker/`、`views/`、`scripts/`，以及在上游文件上做的改动） | MIT | LICENSE |
 | 移植自上游的部分（`src/storyboard/**`、`bin/`） | Apache-2.0 | LICENSE-APACHE + NOTICE |
 
+提交到插件库时填的**数据用途 / 外部服务与费用 / 版本变更说明**三段文案在 PUBLISH.md，按实现如实写，可直接复制。
+
 
 ## 六个工具
 
