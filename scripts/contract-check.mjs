@@ -59,7 +59,7 @@ check('T12', 'contributes.tools 非空时必须声明 "tools" 能力', (m.contri
 
 // ── 条款：运行时侧（sandbox 的 toolDeclaration）
 const spec = await import(pathToFileURL(join(dir, 'src/storyboard/tool-spec.js')).href);
-const specs = [spec.storyboardToolSpec(), spec.zoomToolSpec(), spec.probeToolSpec(), spec.locateToolSpec(), spec.helpToolSpec()];
+const specs = [spec.storyboardToolSpec(), spec.zoomToolSpec(), spec.probeToolSpec(), spec.locateToolSpec(), spec.subtitlesToolSpec(), spec.helpToolSpec()];
 // 存在性先于遍历：specs 静默变空时，下面的 for 会零条通过（和 timeout 那次一样的坑）。
 check('R:spec-count', '运行时 spec 数与 manifest 工具声明数一致', specs.length === (m.contributes?.tools?.length ?? 0), `${specs.length} vs ${m.contributes?.tools?.length ?? 0}`);
 for (const s of specs) {
@@ -70,7 +70,7 @@ for (const s of specs) {
 const indexSrc = readFileSync(join(dir, 'index.js'), 'utf8');
 const table = indexSrc.match(/const TIMEOUT_MS = \{([\s\S]*?)\};/)?.[1] ?? '';
 const entries = [...table.matchAll(/(\w+):\s*([0-9_]+)/g)].map(([, name, lit]) => [name, Number(lit.replace(/_/g, ''))]);
-check('R:timeout-count', 'TIMEOUT_MS 表里每个对外工具都有超时', entries.length === 5, `${entries.length}`);
+check('R:timeout-count', 'TIMEOUT_MS 表里每个对外工具都有超时', entries.length === (m.contributes?.tools?.length ?? 0), `${entries.length} vs ${m.contributes?.tools?.length ?? 0}`);
 for (const [name, n] of entries) {
   check(`R:timeout:${name}`, 'timeoutMs ≤ 600000（10*60000）且为正', n > 0 && n <= 600_000, `${n}`);
 }

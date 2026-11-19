@@ -11,7 +11,7 @@
  * 输出：`<job.out>/result.json`
  *
  * job = {
- *   tool: 'storyboard' | 'zoom' | 'probe' | 'locate' | 'help',
+ *   tool: 'storyboard' | 'zoom' | 'probe' | 'locate' | 'subtitles' | 'help',
  *   args: {...工具参数...},
  *   out:  '<工作区内的输出目录绝对路径>',
  *   workspace: '<会话工作区绝对路径>',
@@ -32,6 +32,7 @@ import { probeUrl } from '../src/storyboard/fetch.js';
 import { runStoryboard } from '../src/storyboard/pipeline.js';
 import { resolveInput } from '../src/storyboard/fetch.js';
 import { formatMatches, matchSegments, recallSegments } from '../src/storyboard/locate.js';
+import { buildSubtitleStrip, DEFAULT_BAND } from '../src/storyboard/subtitle-strip.js';
 import { videoHelp } from '../src/storyboard/help.js';
 
 const jobPath = (() => {
@@ -59,8 +60,7 @@ async function storyboard(args, outDir) {
   });
 }
 
-async function zoom(args, outDir) {
-  let from = args.from;
+async function zoom(args, outDir) {  let from = args.from;
   let to = args.to;
   if (args.cellId !== undefined && args.cellId !== null) {
     const hit = await lookupCell(args.input, args.cellId);
@@ -74,6 +74,49 @@ async function zoom(args, outDir) {
   return runBoard(boardOptions({ ...args, from, to }, { kind: 'zoom' }), {
     detail: args.detail ?? 'med', cellRange: null, outDir,
   });
+}
+
+/** 秒 → `mm:ss`，字幕带的时间码用。 */
+const tc = (s) => {
+  const m = Math.floor(s / 60);
+  const r = Math.floor(s % 60);
+  return `${m}:${String(r).padStart(2, '0')}`;
+};
+
+/**
+ * 硬字幕带长图：跨时间裁同一区域再纵向拼接。
+ * 与上游 `src/tools/subtitles.js` 同一套判据，只把「提交附件」换成「写进 outDir」。
+ */
+async function subtitles(args, outDir) {
+  const out = join(outDir, 'subtitle-strip.jpg');
+  const { path } = await resolveInput(args.input, {
+    cookies: args.cookies, allowAnonymous: args.allowAnonymous === true,
+  });
+  const r = await buildSubtitleStrip({
+    input: path,
+    from: args.from ?? 0,
+    ...(args.to !== undefined ? { to: args.to } : {}),
+    maxStrips: args.maxStrips ?? 24,
+    stepSec: args.stepSec ?? 3,
+    band: Array.isArray(args.band) ? args.band : null,
+    times: Array.isArray(args.times) ? args.times : null,
+    out,
+  });
+  const bandText = r.bandSource === 'explicit'
+    ? `explicit ${(r.band[0] * 100).toFixed(0)}%–${(r.band[1] * 100).toFixed(0)}%`
+    : r.bandSource === 'detected'
+      ? `detected ${(r.band[0] * 100).toFixed(0)}%–${(r.band[1] * 100).toFixed(0)}%`
+      : `bottom ${(DEFAULT_BAND[0] * 100).toFixed(0)}%–${(DEFAULT_BAND[1] * 100).toFixed(0)}% `
+        + '(fallback: no subtitle band detected — pass band:[y0,y1] if the subtitles sit higher)';
+  const every = r.strips.length > 1 ? (r.strips[1].t - r.strips[0].t).toFixed(1) : '—';
+  const text = [
+    `subtitle strip: ${r.strips.length} strips, top to bottom, ~${every}s apart · `
+      + `${tc(r.strips[0]?.t ?? 0)}–${tc(r.to)} · band = ${bandText}`,
+    `timeline: ${r.strips.map((s) => tc(s.t)).join(' ')}`,
+    'Read them in order: strip i (1-based) = the i-th time above. '
+      + 'Blank strips mean no on-screen subtitle at that moment — that is information too, not a failure.',
+  ].join('\n');
+  return { text, images: [out] };
 }
 
 async function probe(args) {
@@ -126,7 +169,7 @@ async function main() {
   // 输出目录必须在这里建：插件侧没有任何能建目录的 host 能力，而 pipeline 直接把 PNG 写进来。
   await mkdir(outDir, { recursive: true });
   const args = job.args ?? {};
-  const handlers = { storyboard, zoom, probe, locate };
+  const handlers = { storyboard, zoom, probe, locate, subtitles };
   try {
     const result = job.tool === 'help'
       ? { text: videoHelp(args.topic), images: [] }

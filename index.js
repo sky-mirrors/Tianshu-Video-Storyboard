@@ -18,11 +18,11 @@ import { fileURLToPath } from 'node:url';
 import { defineTianshuPlugin } from './tpi.js';
 import { parametersToJsonSchema } from './lib/schema.js';
 import {
-  helpToolSpec, locateToolSpec, probeToolSpec, storyboardToolSpec, validateToolArgs,
+  helpToolSpec, locateToolSpec, probeToolSpec, storyboardToolSpec, subtitlesToolSpec, validateToolArgs,
   validateZoomArgs, zoomToolSpec,
 } from './src/storyboard/tool-spec.js';
 
-const SPECS = [storyboardToolSpec, zoomToolSpec, probeToolSpec, locateToolSpec, helpToolSpec];
+const SPECS = [storyboardToolSpec, zoomToolSpec, probeToolSpec, locateToolSpec, subtitlesToolSpec, helpToolSpec];
 /**
  * 上游 spec 名 → 天枢里的对外工具名。
  *
@@ -37,6 +37,7 @@ const WORKER_TOOL = {
   video_zoom: 'zoom',
   video_storyboard_probe: 'probe',
   video_locate: 'locate',
+  video_subtitles: 'subtitles',
   video_help: 'help',
 };
 /** 每种工具的超时（宿主 shell.run 上限 600000ms）。 */
@@ -45,6 +46,7 @@ const TIMEOUT_MS = {
   video_zoom: 300_000,
   video_storyboard_probe: 60_000,
   video_locate: 300_000,
+  video_subtitles: 180_000,
   video_help: 10_000,
 };
 const WORKER = fileURLToPath(new URL('./worker/run.mjs', import.meta.url));

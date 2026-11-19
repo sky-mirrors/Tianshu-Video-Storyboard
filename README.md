@@ -14,6 +14,7 @@
 | `video_zoom` | 某一段/某一格的近距离重看（格少、每格大） | 是 |
 | `video_storyboard_probe` | 只读容器头：时长/分辨率/帧率/编码，不花图 token | 否 |
 | `video_locate` | 纯文本定位：那句话在第几分钟 | 否 |
+| `video_subtitles` | 把硬字幕逐条裁下来纵向拼成一张长图 | 是 |
 | `video_help` | 工具手册：token 成本、策略、档位、切点调参 | 否 |
 
 ### 为什么 `video_probe` 叫 `video_storyboard_probe`

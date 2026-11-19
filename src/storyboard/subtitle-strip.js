@@ -20,7 +20,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawn } from 'node:child_process';
 
-import { DEFAULT_FFMPEG, DEFAULT_FFPROBE } from './probe.js';
+import { DEFAULT_FFMPEG, DEFAULT_FFPROBE, probeVideo } from './probe.js';
 import { detectSubtitleBand, ocrPython } from './ocr.js';
 
 /**
@@ -138,6 +138,10 @@ async function mediaDuration({ input, ffprobePath = DEFAULT_FFPROBE }) {
     child.stderr.on('data', (d) => { stderr += d.toString(); });
     child.on('error', reject);
     child.on('close', (code) => (code === 0 ? resolve(stdout) : reject(new Error(stderr.trim() || `ffprobe ${code}`))));
+  }).catch(async (e) => {
+    // 没有 ffprobe 时走 probe.js 的 ffmpeg -i 兜底（移植到天枢后新增的那条路径）。
+    if (e?.code !== 'ENOENT') throw e;
+    return String((await probeVideo(input)).duration);
   });
   const n = Number(String(out).trim());
   if (!(n > 0)) throw new Error(`cannot read duration: ${JSON.stringify(String(out).trim())}`);
