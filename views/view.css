@@ -1,0 +1,39 @@
+/* 分镜库面板样式：只依赖系统字体与中性色，跟随宿主主题的深浅由 .state 的 data-state 表达。 */
+:root {
+  --fg: #1c1c1e;
+  --muted: #6b6b70;
+  --line: #e3e3e8;
+  --accent: #0a84ff;
+  --bad: #d70015;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --fg: #f2f2f7; --muted: #98989f; --line: #3a3a3c; --accent: #0a84ff; --bad: #ff453a; }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  padding: 12px 14px;
+  font: 13px/1.5 -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif;
+  color: var(--fg);
+  background: transparent;
+}
+main { display: flex; flex-direction: column; gap: 10px; }
+.state { margin: 0; color: var(--muted); }
+.state[data-state="busy"] { color: var(--accent); }
+.state[data-state="bad"] { color: var(--bad); }
+.jobs { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.job {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.job-head { display: flex; justify-content: space-between; gap: 8px; font-variant-numeric: tabular-nums; }
+.job-title { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.job-meta { color: var(--muted); font-size: 12px; }
+.job-image { max-width: 100%; border-radius: 6px; border: 1px solid var(--line); }
+.job-image[hidden] { display: none; }
+.hint { margin: 0; color: var(--muted); font-size: 12px; }
+.hint[hidden] { display: none; }

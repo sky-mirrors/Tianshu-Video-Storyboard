@@ -8,7 +8,7 @@
   "entry": "index.js",
   "runtime": "agent",
   "engines": { "tianshu": ">=4.1.0" },
-  "capabilities": ["tools", "workspace", "shell"],
+  "capabilities": ["tools", "workspace", "shell", "ui"],
   "permissions": {
     "workspace": { "read": true, "write": true },
     "shell": { "run": true }
@@ -21,6 +21,20 @@
       { "name": "video_locate", "description": "纯文本定位：某句话在第几分钟" },
       { "name": "video_subtitles", "description": "把硬字幕逐条裁下来纵向拼成一张长图，按时间码读" },
       { "name": "video_help", "description": "video_* 工具手册：token 成本、策略、档位表、切点调参" }
-    ]
+    ],
+    "ui": {
+      "views": [
+        { "id": "library", "title": "分镜库", "entry": "views/library.html" }
+      ],
+      "panels": [
+        { "view": "library", "label": "分镜库" }
+      ],
+      "commands": [
+        { "id": "refresh", "title": "刷新分镜库" }
+      ],
+      "statusItems": [
+        { "id": "job", "view": "library" }
+      ]
+    }
   }
 }

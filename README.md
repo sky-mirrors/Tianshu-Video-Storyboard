@@ -136,6 +136,27 @@ TPI 2.0 的工具回执只有 `content` 字符串，没有 DSH 的 attachments �
 | 结果以路径交付 | 图落工作区、回执给绝对路径，由模型 `read_file` 打开；不占对话历史的每轮上下文 |
 | 串行执行 | 未声明 `concurrencySafe` → 宿主串行调度。上游 `subtitle-strip.js` 自己写着"并发裁剪必崩"，串行对视频重活更稳 |
 
+## 天枢 UI 面板（分镜库）
+
+TPI 2.0 给了 `views` / `panels` / `commands` / `statusItems` 四个 UI 贡献点，这里用它们做了三件事：
+
+| 功能 | 实现 | 文件 |
+|---|---|---|
+| **分镜库面板** | 侧边面板列出最近 20 次运行（文件名 / 格数 / 张数 / 耗时），卡片尽量贴图；贴不出来时只留文字信息 | `views/library.html`、`views/library.js`、`views/view.css` |
+| **进度反馈** | 慢工具（storyboard / zoom / subtitles）开始与结束各推一条 `host.ui.setStatus('job', ...)`，manifest 里声明了 `statusItems` | `index.js` |
+| **多图分页** | 一次回执最多列 4 张图的路径，其余只报数量与目录 —— 两小时的片子能出十几张，全列会把回执照废 | `index.js` 的 `renderResult` / `IMAGE_PAGE` |
+
+协议按官方 TPI 2.0 示例实现（`shen/release-audit/tpi2-demo/views/status.js` 实读）：
+
+- 视图 → 宿主：`parent.postMessage({ tpi:'view', type:'resize', height })`
+- 宿主 → 视图：`event.data.tpi === 'host'`，`type:'hello'` 携带 `context`（作为工具结果卡片打开时是 `context.tool` / `context.result`）
+- 请求-应答：视图 `{tpi:'view', type:'ask', requestId, payload}` ↔ 宿主 `{tpi:'host', type:'answer', requestId, value}`
+
+**图片预览是尽力而为**：宿主可能把视图跑在带 CSP 的 iframe 里，`file://` 会被拦。所以卡片主体一定是文字
+（文件名 / 格数 / 耗时 / 路径），`<img>` 加载失败就隐藏——不赌未核实的渲染行为。
+
+面板读的是插件进程里的 `library` 数组：视图与插件同在一个 sandbox child，不需要落盘共享状态。
+
 ## 契约符合性（TPI 2.0）
 
 条款不是抄文档，是从宿主 runtime 的实现里读出来、再用宿主自己的校验器跑一遍：
