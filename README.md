@@ -106,9 +106,11 @@ FFMPEG_PATH=... node scripts/tpi-host.smoke.mjs video_storyboard '{"input":"D:/c
 放在 `scripts/` 而不是 `test/`，是因为 `node --test` 会把 `test/` 下每个文件当成一个测试跑。
 
 上游自带的 49 个测试文件**已收进 `test/`**（`npm test` 即 `node --test`，会跑全部）。
-它们覆盖的是已移植的算法层：`asr-lifecycle`、`asr-local`、`asr`、`audio`、`audio-rhythm`、
-`binaries`、`cells`、`scan`、`sheet`、`tiers`、`pack`、`probe`、`transcript-pass` 等 41 个文件
-在本机全绿。本轮实测 550 个用例：**527 通过 / 8 跳过 / 15 失败**，失败分三类，没有一项指向算法层：
+覆盖已移植算法层的 49 个文件里 **36 个零失败**（含 `asr-lifecycle`、`asr-local`、`asr`、
+`audio-rhythm`、`binaries`、`cells`、`scan`、`sheet`、`tiers`、`pack`、`probe`、`transcript-pass` 等）；
+另 8 个整文件因 import 未移植模块无法加载，5 个文件（`audio`、`provenance`、`pipeline`、
+`schema-audit`、`probe-cli`）可加载但含失败用例。本轮实测 550 个用例：
+**527 通过 / 8 跳过 / 15 失败**，失败分三类，没有一项指向算法层：
 
 | 失败源 | 数量 | 原因 |
 |---|---|---|
