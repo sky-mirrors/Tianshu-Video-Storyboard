@@ -4,7 +4,27 @@
 行内打包成尽量少的图，并附一份能引用到秒的时间码索引和一张可覆盖的档位表。
 
 移植自 [`SAOS-3624/dsh-video-storyboard`](https://github.com/SAOS-3624/dsh-video-storyboard)
-（Apache-2.0，见 `LICENSE` / `CREDITS.md` / `NOTICE`），按天枢 **TPI 2.0** 的隔离插件规范重接入口层。
+（Apache-2.0），按天枢 **TPI 2.0** 的隔离插件规范重接入口层。
+
+## 来源与致谢
+
+- **上游**：SAOS-3624/dsh-video-storyboard —— Apache-2.0。
+  本仓库的 `src/storyboard/**` 算法层与 `bin/` CLI 基本原样保留（唯一实质改动是 `probe.js`
+  增加了 ffprobe 缺失时退回 `ffmpeg -i` 的解析），原文与 `NOTICE` 一并留在仓库里。
+- **上游的上游**：那个项目自己也站在更多人肩膀上 —— 设计参考的插件、社区报告与修复、
+  测试素材作者的完整名单在 CREDITS.md。
+- **本仓库新增**：TPI 2.0 入口（`index.js` / `tpi.js` / `lib/`）、宿主侧 `worker/`、
+  `views/` 界面、`scripts/` 打包与自检、以及 ASR key 走宿主密钥库的集成 —— 这些由本仓库作者编写。
+
+## 许可
+
+分成两层，因为移植面不是自有代码：
+
+| 范围 | 许可 | 全文 |
+|---|---|---|
+| 本仓库自有代码（`index.js`、`tpi.js`、`lib/`、`worker/`、`views/`、`scripts/`，以及在上游文件上做的改动） | MIT | LICENSE |
+| 移植自上游的部分（`src/storyboard/**`、`bin/`） | Apache-2.0 | LICENSE-APACHE + NOTICE |
+
 
 ## 六个工具
 
