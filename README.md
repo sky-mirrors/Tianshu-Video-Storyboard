@@ -127,6 +127,15 @@ FFMPEG_PATH=/path/to/ffmpeg \
 `shell.run` 用本地 bash 代跑（契约相同，但不是宿主那一份实现）。
 数据目录留在系统临时目录下（AppContainer 给它的 ACL 让宿主删不掉，属预期）。
 
+真机上五个工具全部跑过一遍：`video_probe` 263ms、`video_storyboard` 2404ms（出图 524622 字节）、
+`video_help`、`video_zoom`（`from/to` 路径）、`video_locate`（无转写时给降级说明，750ms）。
+边界同样正确：空 `input` 与 `maxFrames: 10001` 都在 3ms 内被插件侧拒绝，没有落到 worker。
+
+**一个真机才会遇到的坑**：`cells.json` 只保留最近 12 个文件的记录（`cells.js` 的 `MAX_FILES`），
+跑一次 `npm test` 就会把它填满 `dsh-pipe-*` 临时路径，把真实文件的 cell 表挤掉——
+之后 `video_zoom({cellId})` 会报 `no cell map recorded`。那时改用 `from/to`，
+或重新跑一次 `video_storyboard` 即可。
+
 ## 自检
 
 不装进天枢也能验证胶水层（需要真实视频 + ffmpeg）：
