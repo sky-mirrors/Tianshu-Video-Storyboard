@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>视频分镜设置</title>
+<link rel="stylesheet" href="view.css">
+</head>
+<body>
+<main>
+  <p class="state" id="state" data-state="unknown">正在读取配置…</p>
+
+  <p class="hint">只有带台词的工具需要 key：<code>video_storyboard</code> 的台词索引与 <code>video_locate</code>。
+    不填也能出图，回执会写明「没有做转写」，不会把「没听」说成「视频没说话」。</p>
+
+  <label class="field" for="key">ASR key</label>
+  <input id="key" type="password" autocomplete="off" spellcheck="false" placeholder="siliconflow 或其他 OpenAI 兼容语音服务的 key">
+
+  <div class="actions">
+    <button id="save" type="button">保存</button>
+    <button id="clear" type="button">清除</button>
+  </div>
+
+  <p class="hint" id="message" hidden></p>
+</main>
+<script src="settings.js"></script>
+</body>
+</html>

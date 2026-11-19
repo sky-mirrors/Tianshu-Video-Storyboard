@@ -28,6 +28,18 @@ const host = {
   pluginId: 'video-storyboard',
   sessionId: 'smoke',
   isWorker: false,
+  // TPI 2.0 能力：密钥库与通知。假宿主也要有，否则插件调用 host.secrets 会 TypeError，
+  // 而真机是有这两项的（manifest 声明了 secrets / notifications）。
+  secrets: {
+    store: new Map(),
+    async get(name) { return this.store.get(name) ?? null; },
+    async set(name, value) { this.store.set(name, value); return null; },
+    async delete(name) { this.store.delete(name); return null; },
+  },
+  notifications: {
+    shown: [],
+    async show(message, options) { this.shown.push({ message, options }); return null; },
+  },
   log: { debug() {}, warn: (m) => console.error('[warn]', m) },
   workspace: {
     async write(rel, content) {

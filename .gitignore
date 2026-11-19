@@ -1,3 +1,4 @@
 .rivet/
 .tianshu-video-storyboard/
 node_modules/
+dist/

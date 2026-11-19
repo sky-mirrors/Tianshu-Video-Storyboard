@@ -58,6 +58,15 @@ const TIMEOUT_MS = {
 const SLOW_TOOLS = new Set(['video_storyboard', 'video_zoom', 'video_subtitles']);
 /** 面板保留最近多少次运行。 */
 const LIBRARY_MAX = 20;
+/**
+ * 用户在设置页填的 ASR key 存在宿主密钥库里（`host.secrets`，2.0 能力 secrets）。
+ * 名字受宿主约束 `^[A-Za-z0-9._-]{1,64}$`。
+ */
+const ASR_SECRET = 'asrKey';
+/** 要台词才能完整工作的工具：缺 key 时它们仍然出图，但文字索引是空的。 */
+const NEEDS_ASR = new Set(['video_storyboard', 'video_zoom', 'video_locate']);
+/** 设置页在哪儿填 —— 提示文案里的路子，跟 manifest 的 contributes.ui.settings 同源。 */
+const ASR_HINT = '视频分镜没有 ASR key，台词的转写会跳过（出图不受影响）。到「设置 → 插件 → 视频分镜设置」填一个 key 就能启用。';
 
 const WORKER = fileURLToPath(new URL('./worker/run.mjs', import.meta.url));
 
@@ -66,6 +75,8 @@ export default defineTianshuPlugin({
   activate(host) {
     /** 面板的最近运行记录（视图与插件同进程，直接共享）。 */
     const library = [];
+    /** 缺 key 的提醒每个会话只弹一次。 */
+    let warnedMissingKey = false;
 
     const tools = SPECS.map((spec) => {
       const { name: specName, description, parameters } = spec();
@@ -93,6 +104,19 @@ export default defineTianshuPlugin({
           // 进度提示：statusItems 已在 manifest 声明。宿主不支持时静默跳过，绝不影响出结果。
           if (SLOW_TOOLS.has(name)) {
             void host.ui?.setStatus('job', `正在跑 ${name} · ${basename(String(args.input ?? ''))}`).catch(() => {});
+          }
+
+          // 需要台词的工具：参数里没带 key 时，用设置页写进宿主密钥库的那个。
+          // asr.js 的 effectiveAsrKey(cfg, apiKey) 本来就接受显式覆盖，这里只是把来源换成密钥库。
+          if (NEEDS_ASR.has(name) && args.transcript !== 'off' && !args.asrKey) {
+            const stored = await host.secrets.get(ASR_SECRET);
+            if (stored) args.asrKey = stored;
+            // 没有 key：只提醒一次（同一会话），不然每次调用都弹会把界面刷屏。
+            // 通知失败不影响出图——它是提示，不是流程环节。
+            else if (!warnedMissingKey) {
+              warnedMissingKey = true;
+              await host.notifications.show(ASR_HINT, { level: 'warn' }).catch(() => {});
+            }
           }
 
           await host.workspace.write(jobFile, JSON.stringify({ tool, args, out: outDir, workspace: cwd }));
@@ -131,6 +155,20 @@ export default defineTianshuPlugin({
           const type = message?.type;
           if (type === 'list') return { jobs: library };
           if (type === 'last') return { jobs: library.slice(0, 1) };
+          // 设置页（views/settings.js）：只读写这一个名字，不接受页面传任意 key 进来。
+          if (type === 'secret-status') return { configured: Boolean(await host.secrets.get(ASR_SECRET)) };
+          if (type === 'secret-set') {
+            if (message.key !== ASR_SECRET || typeof message.value !== 'string' || !message.value.trim()) {
+              throw new Error('只接受非空的 asrKey');
+            }
+            await host.secrets.set(ASR_SECRET, message.value.trim());
+            return null;
+          }
+          if (type === 'secret-delete') {
+            if (message.key !== ASR_SECRET) throw new Error('只接受 asrKey');
+            await host.secrets.delete(ASR_SECRET);
+            return null;
+          }
           return null;
         },
         /** 命令面板里不带视图的命令（manifest 的 contributes.ui.commands）。 */

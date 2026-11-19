@@ -7,13 +7,12 @@
   "description": "把一段视频变成可引用的分镜图：一个镜头一格，格子密度跟随切点密度（1/1…1/8），行内打包成尽量少的图，附一份能引用的时间码索引和可覆盖的档位表。移植自 dsh-video-storyboard（Apache-2.0）。",
   "entry": "index.js",
   "runtime": "agent",
-  "engines": { "tianshu": ">=4.1.0" },
-  "capabilities": ["tools", "workspace", "shell", "ui"],
+  "engines": { "tianshu": ">=4.0.5" },
+  "capabilities": ["tools", "workspace", "shell", "ui", "secrets", "notifications"],
   "permissions": {
     "workspace": { "read": true, "write": true },
     "shell": { "run": true }
-  },
-  "contributes": {
+  },  "contributes": {
     "tools": [
       { "name": "video_storyboard", "description": "把视频切成镜头并出分镜宫格图，附可引用的时间码索引" },
       { "name": "video_zoom", "description": "对某一段/某一格近距离重看：格少、每格大" },
@@ -24,10 +23,14 @@
     ],
     "ui": {
       "views": [
-        { "id": "library", "title": "分镜库", "entry": "views/library.html" }
+        { "id": "library", "title": "分镜库", "entry": "views/library.html" },
+        { "id": "settings", "title": "视频分镜设置", "entry": "views/settings.html" }
       ],
       "panels": [
         { "view": "library", "label": "分镜库" }
+      ],
+      "settings": [
+        { "view": "settings" }
       ],
       "commands": [
         { "id": "refresh", "title": "刷新分镜库" }

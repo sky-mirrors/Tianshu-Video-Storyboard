@@ -196,6 +196,8 @@ export function boardOptions(args = {}, { kind = 'board', frameSource = null } =
       return m && Object.keys(m).length ? { tierMap: m } : {};
     })(),
     ...(typeof args.hotwords === 'string' ? { hotwords: args.hotwords } : {}),
+    // key 由 index.js 从宿主密钥库取来注入 args.asrKey（asr.js 的 apiKey 覆盖通道），board 只透传。
+    ...(typeof args.asrKey === 'string' && args.asrKey ? { asrKey: args.asrKey } : {}),
   };
 
   if (kind === 'zoom') {
