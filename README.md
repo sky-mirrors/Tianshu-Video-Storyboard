@@ -105,7 +105,7 @@ TPI 2.0 的工具回执只有 `content` 字符串，没有 DSH 的 attachments �
 条款不是抄文档，是从宿主 runtime 的实现里读出来、再用宿主自己的校验器跑一遍：
 
 ```bash
-node scripts/contract-check.mjs          # 30 条，当前 30/30 PASS
+node scripts/contract-check.mjs          # 36 条，当前 36/36 PASS
 ```
 
 覆盖范围（每条都能指到宿主实现）：
@@ -115,7 +115,7 @@ node scripts/contract-check.mjs          # 30 条，当前 30/30 PASS
 | `$tpi` ∈ 宿主 `TPI_SUPPORTED_VERSIONS`、`kind`、id/version 格式、description ≤500、`engines.tianshu` 必填、能力↔权限配对 | `chunk-CIXVI7BW.js` 的 `parseTpiManifest`（zod + superRefine） |
 | 文件存在、非 legacy 格式 | `chunk-JHS3EY74.js` 的 `readTpiManifest` |
 | 工具 `name` ≤64 且 snake_case、manifest description ≤200 | 同上 zod schema |
-| 运行时 description ≤**2000**、`timeoutMs` ≤600000 | `chunk-RARWTZDC.js` 的 `toolDeclaration`（`text(0x7d0)` / `max(600000)`） |
+| 运行时 description ≤**2000**、`timeoutMs` ≤600000（逐个工具，读 `index.js` 的 `TIMEOUT_MS` 表） | `chunk-RARWTZDC.js` 的 `toolDeclaration`（`text(0x7d0)` / `max(0xa*0xea60)`） |
 | 目录内无符号链接（`nlink` 必须为 1） | 同文件的 `assertPrivateTree` |
 | **manifest 声明与运行时注册逐名一致** | `scripts/real-host-check.mjs` 会打印两份清单并比对 |
 

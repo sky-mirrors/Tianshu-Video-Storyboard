@@ -64,10 +64,13 @@ for (const s of specs) {
   check(`R:${s.name}`, '运行时 description ≤2000（text(0x7d0)）', s.description.length <= 2000, `${s.description.length}`);
 }
 // timeoutMs 只能从源码读：index.js 顶层会调用 defineTianshuPlugin，宿主外 import 会抛。
+// 注意 `timeoutMs: TIMEOUT_MS[name]` 不是数字字面量——要解析 TIMEOUT_MS 表本身。
 const indexSrc = readFileSync(join(dir, 'index.js'), 'utf8');
-for (const v of indexSrc.match(/timeoutMs:\s*([0-9_]+)/g) ?? []) {
-  const n = Number(v.split(':')[1].replace(/_/g, ''));
-  check(`R:timeout${n}`, 'timeoutMs ≤ 600000（10*60000）且为正', n > 0 && n <= 600_000, `${n}`);
+const table = indexSrc.match(/const TIMEOUT_MS = \{([\s\S]*?)\};/)?.[1] ?? '';
+const entries = [...table.matchAll(/(\w+):\s*([0-9_]+)/g)].map(([, name, lit]) => [name, Number(lit.replace(/_/g, ''))]);
+check('R:timeout-count', 'TIMEOUT_MS 表里每个对外工具都有超时', entries.length === 5, `${entries.length}`);
+for (const [name, n] of entries) {
+  check(`R:timeout:${name}`, 'timeoutMs ≤ 600000（10*60000）且为正', n > 0 && n <= 600_000, `${n}`);
 }
 
 // ── 条款：目录卫生（assertPrivateTree：nlink 必须为 1，不能有符号链接）
