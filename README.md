@@ -12,9 +12,16 @@
 |---|---|---|
 | `video_storyboard` | 全片或一段的概览宫格 + 时间码索引 | 是 |
 | `video_zoom` | 某一段/某一格的近距离重看（格少、每格大） | 是 |
-| `video_probe` | 只读容器头：时长/分辨率/帧率/编码，不花图 token | 否 |
+| `video_storyboard_probe` | 只读容器头：时长/分辨率/帧率/编码，不花图 token | 否 |
 | `video_locate` | 纯文本定位：那句话在第几分钟 | 否 |
 | `video_help` | 工具手册：token 成本、策略、档位、切点调参 | 否 |
+
+### 为什么 `video_probe` 叫 `video_storyboard_probe`
+
+`~/.rivet/plugins/media-toolkit`（TPI 1.0，前一个移植的插件）也声明了 `video_probe`。
+宿主对**跨 TPI 版本**同名工具怎么处理，我没能从 runtime 代码或日志取证到明文行为，
+所以按保守方案在插件边界改名：上游 `src/storyboard/tool-spec.js` 与它的 49 个测试
+保持原样，改名只发生在 `index.js` 的 `RENAME` 表。全量扫描当前安装位共 15 个工具名，零冲突。
 
 ## 安装
 
@@ -102,7 +109,7 @@ TPI 2.0 的工具回执只有 `content` 字符串，没有 DSH 的 attachments �
 | 1. 部署到安装位 | `~/.rivet/plugins/video-storyboard/`（838K） | ✔ |
 | 2. 清单校验 | 宿主自带 `readTpiManifest` + `parseTpiManifest`（不是第三方 jsonschema） | `ok = true`；`$tpi 2.0` 落在 `TPI_SUPPORTED_VERSIONS = ['1.0','2.0']` |
 | 3. 真沙箱绑定 | 宿主 `bindIsolatedTpiPlugin`（Windows **AppContainer** + Node `--permission` 白名单：`readPaths=[插件目录]`、`writePaths=[数据目录]`） | 返回 `{pluginId, tools(5), hooks, stop, dispose}` |
-| 4. 沙箱内调用 | `video_probe` | 232ms，`isError=false`，返回 8.06s / 1280×720 / 24fps / h264 |
+| 4. 沙箱内调用 | `video_storyboard_probe` | 232ms，`isError=false`，返回 8.06s / 1280×720 / 24fps / h264 |
 | 5. 沙箱内出图 | `video_storyboard` | 2404ms，`isError=false`，`storyboard.png`（756×499，4 格）落到工作区 |
 
 真机抓到 mock 掩盖的两条缺陷（已修，`index.js` + `worker/run.mjs`）：
@@ -119,7 +126,7 @@ TPI 2.0 的工具回执只有 `content` 字符串，没有 DSH 的 attachments �
 ```bash
 node scripts/real-host-check.mjs                    # 只校验清单 + 绑沙箱
 FFMPEG_PATH=/path/to/ffmpeg \
-  node scripts/real-host-check.mjs video_probe '{"input":"D:/clip.mp4"}'
+  node scripts/real-host-check.mjs video_storyboard_probe '{"input":"D:/clip.mp4"}'
 ```
 
 它 import 的是 `Tianshu\rivet-runtime\chunk-JHS3EY74.js`（`readTpiManifest`）、
@@ -127,7 +134,7 @@ FFMPEG_PATH=/path/to/ffmpeg \
 `shell.run` 用本地 bash 代跑（契约相同，但不是宿主那一份实现）。
 数据目录留在系统临时目录下（AppContainer 给它的 ACL 让宿主删不掉，属预期）。
 
-真机上五个工具全部跑过一遍：`video_probe` 263ms、`video_storyboard` 2404ms（出图 524622 字节）、
+真机上五个工具全部跑过一遍：`video_storyboard_probe` 263ms、`video_storyboard` 2404ms（出图 524622 字节）、
 `video_help`、`video_zoom`（`from/to` 路径）、`video_locate`（无转写时给降级说明，750ms）。
 边界同样正确：空 `input` 与 `maxFrames: 10001` 都在 3ms 内被插件侧拒绝，没有落到 worker。
 
@@ -141,7 +148,7 @@ FFMPEG_PATH=/path/to/ffmpeg \
 不装进天枢也能验证胶水层（需要真实视频 + ffmpeg）：
 
 ```bash
-FFMPEG_PATH=/path/to/ffmpeg node scripts/tpi-host.smoke.mjs video_probe '{"input":"D:/clip.mp4"}'
+FFMPEG_PATH=/path/to/ffmpeg node scripts/tpi-host.smoke.mjs video_storyboard_probe '{"input":"D:/clip.mp4"}'
 FFMPEG_PATH=... node scripts/tpi-host.smoke.mjs video_storyboard '{"input":"D:/clip.mp4","transcript":"off"}'
 ```
 

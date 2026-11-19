@@ -23,9 +23,29 @@ import {
 } from './src/storyboard/tool-spec.js';
 
 const SPECS = [storyboardToolSpec, zoomToolSpec, probeToolSpec, locateToolSpec, helpToolSpec];
+/**
+ * 上游 spec 名 → 天枢里的对外工具名。
+ *
+ * `video_probe` 与已装的 media-toolkit 插件（TPI 1.0）重名，宿主遇到跨版本重名的行为
+ * 我没能取证（代码与日志都没有明文）。与其赌它"后者覆盖"，不如在插件边界把名字改掉——
+ * 上游的 `tool-spec.js` 与它的 49 个测试因此保持原样，改名只发生在这一层。
+ */
+const RENAME = { video_probe: 'video_storyboard_probe' };
+/** 对外工具名 → worker 里的工具标识（worker/run.mjs 的 handlers 键）。 */
+const WORKER_TOOL = {
+  video_storyboard: 'storyboard',
+  video_zoom: 'zoom',
+  video_storyboard_probe: 'probe',
+  video_locate: 'locate',
+  video_help: 'help',
+};
 /** 每种工具的超时（宿主 shell.run 上限 600000ms）。 */
 const TIMEOUT_MS = {
-  video_storyboard: 300_000, video_zoom: 300_000, video_probe: 60_000, video_locate: 300_000, video_help: 10_000,
+  video_storyboard: 300_000,
+  video_zoom: 300_000,
+  video_storyboard_probe: 60_000,
+  video_locate: 300_000,
+  video_help: 10_000,
 };
 const WORKER = fileURLToPath(new URL('./worker/run.mjs', import.meta.url));
 
@@ -42,7 +62,8 @@ export default defineTianshuPlugin({
   id: 'video-storyboard',
   activate(host) {
     const tools = SPECS.map((spec) => {
-      const { name, description, parameters } = spec();
+      const { name: specName, description, parameters } = spec();
+      const name = RENAME[specName] ?? specName;
       return {
         name,
         description,
@@ -54,7 +75,7 @@ export default defineTianshuPlugin({
             const problems = name === 'video_zoom' ? validateZoomArgs(args) : validateToolArgs(args);
             if (problems.length > 0) return { content: `invalid arguments: ${problems.join('; ')}`, isError: true };
           }
-          const tool = name.replace(/^video_/, '');
+          const tool = WORKER_TOOL[name];
           const runId = `${tool}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
           const rel = `.tianshu-video-storyboard/${runId}`;
           const outDir = `${cwd}/${rel}`.replace(/\\/g, '/');

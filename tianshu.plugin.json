@@ -16,7 +16,7 @@
     "tools": [
       { "name": "video_storyboard", "description": "把视频切成镜头并出分镜宫格图，附可引用的时间码索引" },
       { "name": "video_zoom", "description": "对某一段/某一格近距离重看：格少、每格大" },
-      { "name": "video_probe", "description": "只读容器头：时长/分辨率/帧率/编解码器，不出图" },
+      { "name": "video_storyboard_probe", "description": "只读容器头：时长/分辨率/帧率/编解码器，不出图（原 video_probe，避免与 media-toolkit 重名）" },
       { "name": "video_locate", "description": "纯文本定位：某句话在第几分钟" },
       { "name": "video_help", "description": "video_* 工具手册：token 成本、策略、档位表、切点调参" }
     ]
