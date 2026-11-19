@@ -487,6 +487,14 @@ export function subtitlesToolSpec() {
         type: 'integer',
         description: 'How many strips (default 12).',
       },
+      // 上游这片能力写了却够不到：subtitle-strip.js 支持按已知时间码对齐（省一半条数），
+      // worker 也在读 args.times，但参数表没声明 → 任何宿主都会把它当未知参数丢掉。
+      // 这里补上声明，让它真正可达（有字幕轨或先跑过 video_locate 时可传）。
+      times: {
+        type: 'array',
+        items: { type: 'number' },
+        description: 'Known timestamps (seconds) to align strips to instead of uniform sampling.',
+      },
       stepSec: {
         type: 'number',
         description: 'Seconds between strips (default 3).',

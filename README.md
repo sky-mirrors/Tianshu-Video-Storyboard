@@ -101,6 +101,41 @@ TPI 2.0 的工具回执只有 `content` 字符串，没有 DSH 的 attachments �
   `$DSH_HOME/video.json`（`DSH_HOME` 未设时用 `~/.dsh`），与上游同一份 schema。
 - `voice`/ASR 走 `src/storyboard/asr.js` 的既有后端（需要 key 或本地服务），不做宿主侧模型注入。
 
+## 移植决策台账（扔 / 留 / 补 / 特色）
+
+**扔掉**（上游有、这里不需要）：
+
+| 模块 | 行数 | 为什么扔 |
+|---|---|---|
+| `src/settings/**`（config/deps/server/page.js/page.html/token） | 721 | 依赖 DSH 的 `webServer` 注入；天枢 TPI 2.0 没有这个能力。配置改读 `~/.dsh/video.json`，无文件则用代码默认值 |
+| `src/storyboard/offload.js` | 225 | 依赖 DSH 的 `session/event` + `sessionController`，用于把更早的图从**对话历史**里省略。本插件图不进对话历史（落工作区），这套机制无对象 |
+| `src/storyboard/host-asr.js` | 170 | 依赖 DSH 的 `speechToText` 服务注入；天枢没有该能力，ASR 走原有的 `asr.js`（自带 key/本地服务） |
+| `src/storyboard/register.js` | 40 | DSH 的 `ctx.tools.register` 注册入口，已被 `index.js` 的 TPI 工具表取代 |
+| `src/index.js`（DSH 入口） | 254 | 含 cordis `inject` 就绪门、`apply` 看门狗、图片 offload 接线，全部是 DSH 宿主语义 |
+| `src/storyboard/index.js`（barrel） | 43 | 全仓零调用方（可达性分析确认后删除） |
+
+**保留**（虽不在这条链路上，但有独立价值）：
+
+| 模块 | 为什么留 |
+|---|---|
+| `bin/`（7 个 CLI） | 终端里仍可手动跑（插件目录在 `~/.rivet/plugins/`，任意 shell 可达），是排障与批量出图的入口 |
+| `src/storyboard/segments.js` | 上游 `segments.test.mjs` / `e2e.scan.test.mjs` 直接 import |
+
+**补全**（上游写了却没接通，这里接上）：
+
+| 项 | 上游状态 | 本插件 |
+|---|---|---|
+| `video_subtitles` 的 `times` 参数 | `subtitle-strip.js` 支持、`tools/subtitles.js` 读 `args.times`，但 schema 没声明 → 任何宿主都会丢弃（DSH 注释原话："schema 没声明的参数会被直接丢掉"） | 参数表补上 `times: number[]`，实测按 `[1,3,5,7]` 精确对齐（不再是均匀抽样） |
+| `ffprobe` 缺失 | 直接失败（`spawn ffprobe ENOENT`） | `probe.js`、`subtitle-strip.js` 两处都退回 `ffmpeg -i` |
+
+**天枢特色**（上游做不到、这里做得到）：
+
+| 特色 | 说明 |
+|---|---|
+| 沙箱安全模型 | 插件跑在 AppContainer + Node `--permission` 里（只读插件目录、只写数据目录），真正解码交给宿主侧 `worker/run.mjs` —— 上游是同进程无隔离 |
+| 结果以路径交付 | 图落工作区、回执给绝对路径，由模型 `read_file` 打开；不占对话历史的每轮上下文 |
+| 串行执行 | 未声明 `concurrencySafe` → 宿主串行调度。上游 `subtitle-strip.js` 自己写着"并发裁剪必崩"，串行对视频重活更稳 |
+
 ## 契约符合性（TPI 2.0）
 
 条款不是抄文档，是从宿主 runtime 的实现里读出来、再用宿主自己的校验器跑一遍：
