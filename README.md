@@ -144,7 +144,7 @@ TPI 2.0 给了 `views` / `panels` / `commands` / `statusItems` 四个 UI 贡献�
 |---|---|---|
 | **分镜库面板** | 侧边面板列出最近 20 次运行（文件名 / 格数 / 张数 / 耗时），卡片尽量贴图；贴不出来时只留文字信息 | `views/library.html`、`views/library.js`、`views/view.css` |
 | **进度反馈** | 慢工具（storyboard / zoom / subtitles）开始与结束各推一条 `host.ui.setStatus('job', ...)`，manifest 里声明了 `statusItems` | `index.js` |
-| **多图分页** | 一次回执最多列 4 张图的路径，其余只报数量与目录 —— 两小时的片子能出十几张，全列会把回执照废 | `index.js` 的 `renderResult` / `IMAGE_PAGE` |
+| **多图分页** | 一次回执最多列 4 张图的路径，其余只报数量与目录 —— 两小时的片子能出十几张，全列会把回执照废 | `lib/render.js` 的 `renderResult` / `IMAGE_PAGE`（有 `test/render.test.mjs` 盯着分页边界） |
 
 协议按官方 TPI 2.0 示例实现（`shen/release-audit/tpi2-demo/views/status.js` 实读）：
 

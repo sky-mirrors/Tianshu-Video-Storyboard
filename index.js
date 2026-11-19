@@ -21,6 +21,7 @@ import { fileURLToPath } from 'node:url';
 
 import { defineTianshuPlugin } from './tpi.js';
 import { parametersToJsonSchema } from './lib/schema.js';
+import { renderResult, summarize } from './lib/render.js';
 import {
   helpToolSpec, locateToolSpec, probeToolSpec, storyboardToolSpec, subtitlesToolSpec, validateToolArgs,
   validateZoomArgs, zoomToolSpec,
@@ -55,33 +56,10 @@ const TIMEOUT_MS = {
 };
 /** 真正吃时间的工具：调它们时给状态栏一个进度提示。 */
 const SLOW_TOOLS = new Set(['video_storyboard', 'video_zoom', 'video_subtitles']);
-/** 一次回执里最多列几张图的路径；其余只报数量（两小时的片子能出十几张）。 */
-const IMAGE_PAGE = 4;
 /** 面板保留最近多少次运行。 */
 const LIBRARY_MAX = 20;
 
 const WORKER = fileURLToPath(new URL('./worker/run.mjs', import.meta.url));
-
-/** 把结果 JSON 折成工具回执文本：索引在前，图片路径按页给（模型按需打开）。 */
-function renderResult(result) {
-  const parts = [result.text];
-  const images = result.images ?? [];
-  if (images.length > 0) {
-    const shown = images.slice(0, IMAGE_PAGE);
-    parts.push('', `分镜图（用 read_file 打开查看；共 ${images.length} 张，先列 ${shown.length} 张）：`);
-    for (const p of shown) parts.push(`- ${p}`);
-    if (images.length > shown.length) {
-      parts.push('', `其余 ${images.length - shown.length} 张与上面同一目录、文件名按序号递增；需要时再取。`);
-    }
-  }
-  return parts.join('\n');
-}
-
-/** 从结果文本里抠出格子数，喂给面板卡片；抠不到就不写，不猜。 */
-function summarize(text) {
-  const cells = /grid="([0-9]+) frames/.exec(text)?.[1];
-  return cells ? { cells: Number(cells) } : {};
-}
 
 export default defineTianshuPlugin({
   id: 'video-storyboard',
