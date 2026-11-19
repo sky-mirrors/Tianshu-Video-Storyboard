@@ -93,6 +93,40 @@ TPI 2.0 的工具回执只有 `content` 字符串，没有 DSH 的 attachments �
   `$DSH_HOME/video.json`（`DSH_HOME` 未设时用 `~/.dsh`），与上游同一份 schema。
 - `voice`/ASR 走 `src/storyboard/asr.js` 的既有后端（需要 key 或本地服务），不做宿主侧模型注入。
 
+## 真机测试（Windows 10 · 天枢 4.1.0 · 宿主进程 tianshu-desktop 33824）
+
+不是 mock：直接用宿主 runtime 自己的三个文件跑通。
+
+| 步骤 | 用什么 | 结果 |
+|---|---|---|
+| 1. 部署到安装位 | `~/.rivet/plugins/video-storyboard/`（838K） | ✔ |
+| 2. 清单校验 | 宿主自带 `readTpiManifest` + `parseTpiManifest`（不是第三方 jsonschema） | `ok = true`；`$tpi 2.0` 落在 `TPI_SUPPORTED_VERSIONS = ['1.0','2.0']` |
+| 3. 真沙箱绑定 | 宿主 `bindIsolatedTpiPlugin`（Windows **AppContainer** + Node `--permission` 白名单：`readPaths=[插件目录]`、`writePaths=[数据目录]`） | 返回 `{pluginId, tools(5), hooks, stop, dispose}` |
+| 4. 沙箱内调用 | `video_probe` | 232ms，`isError=false`，返回 8.06s / 1280×720 / 24fps / h264 |
+| 5. 沙箱内出图 | `video_storyboard` | 2404ms，`isError=false`，`storyboard.png`（756×499，4 格）落到工作区 |
+
+真机抓到 mock 掩盖的两条缺陷（已修，`index.js` + `worker/run.mjs`）：
+
+1. **宿主的 `workspace.write` 不创建父目录** —— 原来把 `job.json` 写进 `.tianshu-video-storyboard/<runId>/`，
+   真机直接 `ENOENT`。现改为写在**工作区根**（worker 读完即删），子目录由 worker 自己建。
+2. **输出目录同样没人建** —— worker 只在写 `result.json` 时才 `mkdir`，pipeline 已经把 PNG 写进去了，
+   真机报 `[image2] Could not open file : ...\storyboard.png`。现改为 worker 一启动就建 `out`。
+
+`scripts/tpi-host.smoke.mjs` 也同步删掉了 `mkdir(dirname)`——留着它就是让这两类缺陷在 mock 里永远不复现。
+
+真机检查可复跑（用的是宿主自己的 runtime，不是 mock）：
+
+```bash
+node scripts/real-host-check.mjs                    # 只校验清单 + 绑沙箱
+FFMPEG_PATH=/path/to/ffmpeg \
+  node scripts/real-host-check.mjs video_probe '{"input":"D:/clip.mp4"}'
+```
+
+它 import 的是 `Tianshu\rivet-runtime\chunk-JHS3EY74.js`（`readTpiManifest`）、
+`chunk-CIXVI7BW.js`（`parseTpiManifest`）、`chunk-RARWTZDC.js`（`bindIsolatedTpiPlugin`）；
+`shell.run` 用本地 bash 代跑（契约相同，但不是宿主那一份实现）。
+数据目录留在系统临时目录下（AppContainer 给它的 ACL 让宿主删不掉，属预期）。
+
 ## 自检
 
 不装进天枢也能验证胶水层（需要真实视频 + ffmpeg）：

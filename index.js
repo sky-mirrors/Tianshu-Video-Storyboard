@@ -58,9 +58,12 @@ export default defineTianshuPlugin({
           const runId = `${tool}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
           const rel = `.tianshu-video-storyboard/${runId}`;
           const outDir = `${cwd}/${rel}`.replace(/\\/g, '/');
+          // 作业文件写在工作区**根上**：宿主的 workspace.write 不会创建父目录（真机实测
+          // ENOENT: ...\.tianshu-video-storyboard\<runId>\job.json）。子目录由 worker 自己建。
+          const jobFile = `.tianshu-video-storyboard-job-${runId}.json`;
 
-          await host.workspace.write(`${rel}/job.json`, JSON.stringify({ tool, args, out: outDir, workspace: cwd }));
-          await host.shell.run(`"${process.execPath}" "${WORKER}" --job "${outDir}/job.json"`, {
+          await host.workspace.write(jobFile, JSON.stringify({ tool, args, out: outDir, workspace: cwd }));
+          await host.shell.run(`"${process.execPath}" "${WORKER}" --job "${cwd}/${jobFile}"`, {
             timeoutMs: TIMEOUT_MS[name],
           });
           const result = JSON.parse(await host.workspace.read(`${rel}/result.json`));

@@ -14,7 +14,7 @@
  */
 
 import { execFile } from 'node:child_process';
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { readFile, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
@@ -31,9 +31,9 @@ const host = {
   log: { debug() {}, warn: (m) => console.error('[warn]', m) },
   workspace: {
     async write(rel, content) {
-      const p = join(root, rel);
-      await mkdir(dirname(p), { recursive: true });
-      await writeFile(p, content, 'utf8');
+      // **与真机一致：宿主的 workspace.write 不创建父目录**（真机实测 ENOENT）。
+      // 这里故意不 mkdir —— 否则插件把文件写进子目录时 smoke 仍然绿，真机却挂。
+      await writeFile(join(root, rel), content, 'utf8');
       return null;
     },
     async read(rel) { return readFile(join(root, rel), 'utf8'); },

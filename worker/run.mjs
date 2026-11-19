@@ -20,7 +20,7 @@
  * result = { ok: true, text, images: [绝对路径...] } | { ok: false, error }
  */
 
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { boardOptions } from '../src/storyboard/board.js';
@@ -120,7 +120,11 @@ async function locate(args) {
 async function main() {
   if (!jobPath) throw new Error('usage: node worker/run.mjs --job <job.json>');
   const job = JSON.parse(await readFile(jobPath, 'utf8'));
+  // 作业文件落在工作区根上（插件侧的 workspace.write 建不了父目录）；读完立刻删，别在用户仓库里留垃圾。
+  await rm(jobPath, { force: true });
   const outDir = String(job.out);
+  // 输出目录必须在这里建：插件侧没有任何能建目录的 host 能力，而 pipeline 直接把 PNG 写进来。
+  await mkdir(outDir, { recursive: true });
   const args = job.args ?? {};
   const handlers = { storyboard, zoom, probe, locate };
   try {
